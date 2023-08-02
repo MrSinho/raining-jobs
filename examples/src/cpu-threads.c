@@ -14,13 +14,15 @@ extern "C" {
 
 
 void unit(
-	uint32_t start_bit, 
-	uint32_t src_length, 
-	uint32_t src_size, 
-	uint32_t next_src_left_offset,
-	uint32_t next_src_right_offset,
-	uint32_t src_offset, 
-	uint8_t* src
+	uint32_t  start_bit, 
+	uint32_t  src_length, 
+	uint32_t  src_size, 
+	uint32_t  next_src_left_offset,
+	uint32_t  next_src_right_offset,
+	uint32_t  src_offset, 
+	uint8_t*  src,
+	uint8_t*  dst,
+	uint32_t  src_original_size
 ) {
 	//already checked with left_count and right_count
 	//if (src_length <= 1) {
@@ -41,6 +43,12 @@ void unit(
 	uint32_t left_count  = 0;
 	uint32_t right_count = 0;
 	uint32_t item_size   = src_size / src_length;
+
+	uint8_t* p_d0 = &dst[0];
+	uint8_t* p_d1 = &dst[1];
+	uint8_t* p_d2 = &dst[2];
+	uint8_t* p_d3 = &dst[3];
+	uint8_t* p_d4 = &dst[4];
 
 	//R0
 	//
@@ -97,8 +105,13 @@ void unit(
 			src_offset,             //next_src_left_offset //overwrite
 			left_count * item_size - item_size, //next_src_right_offset //overwrite
 			next_src_left_offset,   //src_offset
-			src                     //src
+			src,                    //src
+			dst,                     //dst
+			src_original_size
 		);
+	}
+	else if (left_count == 1) {//successfully isolated one number, and found the index of the number
+		((char*)dst)[next_src_left_offset % src_original_size] = ((char*)src)[next_src_left_offset];
 	}
 
 	if (right_count > 1) {//need to discriminate between at least two numbers, continue, invert dst and src
@@ -130,8 +143,13 @@ void unit(
 			src_offset + left_count * item_size,//next_src_left_offset //overwrite
 			src_offset + src_size - item_size,//next_src_right_offset //overwrite
 			next_src_right_offset - item_size * (right_count - 1),//src_offset
-			src//src
+			src,//src
+			dst,//dst
+			src_original_size
 		);
+	}
+	else if (right_count == 1) {//successfully isolated one number, and found the index of the number
+		((char*)dst)[next_src_right_offset % src_original_size] = ((char*)src)[next_src_right_offset];
 	}
 
 	//check if in order, otherwise repeat loop with next bit
@@ -160,9 +178,14 @@ int main(void) {
 	//	printf("%i: %i\n", i, p_src[i]);
 	//}
 
-	uint8_t src[SRC_LENGTH * 8] = {
-		153, 224, 189, 23, 7
+	uint8_t src[SRC_LENGTH * 2] = {//double size
+		//153, 224, 189, 23, 7  //OK
+		//1, 8, 2, 184, 81  //OK
+		//255, 165, 84, 132, 11  //OK
+		 7, 49, 113, 165, 98 //NOT OK
 	};
+
+	uint8_t dst[SRC_LENGTH] = { 0 };
 	
 	//src becomes dst
 	//dst becomes src
@@ -174,7 +197,9 @@ int main(void) {
 		SRC_LENGTH * ITEM_SIZE,                 //next_src_left_offset
 		SRC_LENGTH * ITEM_SIZE * 2 - ITEM_SIZE, //next_src_right_offset
 		0, 
-		src
+		src,
+		dst,
+		SRC_LENGTH * ITEM_SIZE
 	);
 
 	//WITH ENDLESS MEMORY
