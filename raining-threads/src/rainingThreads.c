@@ -32,55 +32,58 @@ uint8_t rainingComputeInit(
 
 
 
-uint32_t rainingRaining(
-	uint32_t   src_length,
-	uint32_t   src_size,
-	uint32_t   src_offset,
-	uint8_t*   p_src,
-	uint32_t   next_src_left_offset,
-	uint32_t   next_src_right_offset,
-	uint32_t   bit_idx
+uint32_t rainingUnit(
+	uint32_t          memory_type_size_bytes,
+	uint8_t           is_signed,
+	uint32_t          src_length,
+	uint32_t          src_size,
+	uint32_t          src_offset,
+	uint8_t*          p_src,
+	uint32_t          next_src_left_offset,
+	uint32_t          next_src_right_offset,
+	uint32_t          bit_idx
 ) {
-	uint32_t item_size = src_size / src_length;//in bytes
+	uint32_t item_size              = src_size / src_length;//in bytes
 
 	uint32_t _next_src_left_offset  = next_src_left_offset;
 	uint32_t _next_src_right_offset = next_src_right_offset;//_0 = src_size - item_size
 
-	uint32_t left_count = 0;//bigger
+	uint32_t left_count             = 0;//bigger
 
 	for (uint32_t local_item_offset = 0; local_item_offset < src_size; local_item_offset += item_size) {
-		//max size is 8 bytes, 64 bits
-		//uint64_t* p_item = (uint64_t*)&((uint8_t*)p_src)[src_item_offset];
-		//uint32_t  item_count = local_item_offset / item_size;
-
-		//change to uint64 later
-		uint8_t a0 = p_src[0];
-		uint8_t a1 = p_src[1];
-		uint8_t a2 = p_src[2];
-		uint8_t a3 = p_src[3];
-		uint8_t a4 = p_src[4];
 		
-		uint8_t* p_item = (uint8_t*)&((char*)p_src)[src_offset + local_item_offset];
-		uint8_t    item = (uint8_t)(*p_item);//not actual value, but value with potentially junk bits coming from next value
+		//debug
+		//uint8_t* p_debug = (uint8_t*)&((char*)p_src)[src_offset + local_item_offset];
 
-		if (item & (uint64_t)(1 << bit_idx)) {
-			memcpy(
-				&((uint8_t*)p_src)[_next_src_left_offset],//remember 
-				p_item,
-				item_size
-			);
+		//find memory address
+		uint64_t* p_item = (uint64_t*)&((char*)p_src)[src_offset + local_item_offset];
+		uint64_t item = (uint64_t)(*p_item);//not actual value, but value with potentially junk bits coming from next value, which are discarded
 
-			_next_src_left_offset += item_size;
-			left_count++;
+		if (!is_signed) {//unsigned, standard process
+
+			if (item & (1i64 << bit_idx)) {//64 bit shift, MSVC complains otherwise
+				
+				memcpy(
+					&((char*)p_src)[_next_src_left_offset],
+					p_item,
+					item_size
+				);
+
+				_next_src_left_offset += item_size;
+				left_count++;
+			}
+			else {
+				memcpy(
+					&((char*)p_src)[_next_src_right_offset],
+					p_item,
+					item_size
+				);
+
+				_next_src_right_offset -= item_size;
+			}
 		}
-		else {
-			memcpy(
-				&((uint8_t*)p_src)[_next_src_right_offset],//remember
-				p_item,
-				item_size
-			);
-
-			_next_src_right_offset -= item_size;
+		else if (is_signed && item < 0) {//unsigned and negative, reverse process
+			
 		}
 
 	}
