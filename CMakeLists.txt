@@ -2,35 +2,45 @@ cmake_minimum_required(VERSION 3.0)
 add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
 
 
+
+add_subdirectory(externals/shthreads)
+add_subdirectory(externals/shvulkan)
+
+
 #||||       ||||
 #||||PROJECT||||
 #||||       ||||
-project(shtemplate C)
+project(raining-threads C)
 
 
 
 #||||       ||||
 #||||LIBRARY||||
 #||||       ||||
-function(build_shtemplate)
-add_library(shtemplate shtemplate/src/shtemplate.c)
-target_include_directories(shtemplate PUBLIC 
-    ${CMAKE_CURRENT_SOURCE_DIR}/shtemplate/include
+function(build_raining_threads)
+add_library(raining-threads raining-threads/src/rainingThreads.c)
+target_include_directories(raining-threads PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/raining-threads/include
 )
-set_target_properties(shtemplate PROPERTIES
+target_link_libraries(raining-threads PUBLIC shthreads shvulkan)
+set_target_properties(raining-threads PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin
 )
 endfunction()
 
 
 
-#||||       ||||
-#||||SAMPLES||||
-#||||       ||||
-function(build_shtemplate_sample)
-add_executable(shtemplate-sample sample/src/shtemplate-sample.c)
-target_link_libraries(shtemplate-sample PUBLIC shtemplate)
-set_target_properties(shtemplate-sample PROPERTIES
+#||||        ||||
+#||||EXAMPLES||||
+#||||        ||||
+function(build_raining_threads_examples)
+add_executable(raining-threads-cpu-example examples/src/cpu-threads.c)
+add_executable(raining-threads-gpu-compute examples/src/gpu-compute.c)
+
+target_link_libraries(raining-threads-cpu-example PUBLIC raining-threads)
+target_link_libraries(raining-threads-gpu-compute PUBLIC raining-threads)
+
+set_target_properties(raining-threads-cpu-example raining-threads-gpu-compute PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin
     VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/bin
 )
@@ -49,7 +59,7 @@ endif(UNIX)
 #||||     ||||
 #||||FLAGS||||
 #||||     ||||
-option(SH_TEMPLATE_BUILD_SAMPLE CACHE OFF)
+option(RAINING_THREADS_BUILD_EXAMPLES CACHE OFF)
 
 
 
@@ -57,10 +67,10 @@ option(SH_TEMPLATE_BUILD_SAMPLE CACHE OFF)
 #||||MAIN||||
 #||||    ||||
 function(main)
-build_shtemplate()
-if (SH_TEMPLATE_BUILD_SAMPLE)
-build_shtemplate_sample()
-endif(SH_TEMPLATE_BUILD_SAMPLE)
+build_raining_threads()
+if (RAINING_THREADS_BUILD_EXAMPLES)
+build_raining_threads_examples()
+endif(RAINING_THREADS_BUILD_EXAMPLES)
 endfunction()
 
 
