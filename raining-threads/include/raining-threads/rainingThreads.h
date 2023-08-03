@@ -54,15 +54,14 @@ extern uint8_t rainingComputeInit(
 
 
 extern uint32_t rainingUnit(
-	uint32_t          memory_type_size_bytes,
-	uint8_t           are_negative,
-	uint32_t          src_length,
-	uint32_t          src_size,
-	uint32_t          src_offset,
-	uint8_t*          p_src,
-	uint32_t          next_src_left_offset,
-	uint32_t          next_src_right_offset,
-	uint32_t          bit_idx
+	uint32_t memory_type_size_bytes,
+	uint32_t src_length,
+	uint32_t src_size,
+	uint32_t src_offset,
+	uint8_t* p_src,
+	uint32_t next_src_left_offset,
+	uint32_t next_src_right_offset,
+	uint32_t bit_idx
 );
 
 
