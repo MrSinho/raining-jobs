@@ -1,8 +1,9 @@
+owner=mrsinho
 repo_name=raining-jobs
 repo_dir=./
 
-prerequisites=.shci/windows/prerequisites.sh
+prerequisites=.shci/windows/prerequisites.bat
 prerequisites_output=.shci/windows/prerequisites-output.txt
 
-build=.shci/windows/build.sh
+build=.shci/windows/build.bat
 build_output=.shci/windows/build-output.txt

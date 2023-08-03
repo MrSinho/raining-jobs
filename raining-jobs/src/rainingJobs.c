@@ -4,6 +4,8 @@ extern "C" {
 
 #include "raining-jobs/rainingJobs.h"
 
+#include <stdlib.h>
+#include <memory.h>
 
 
 uint8_t rainingHostInit(
@@ -164,7 +166,11 @@ uint32_t rainingUnit(
 		uint64_t* p_item = (uint64_t*)&((char*)p_src)[src_offset + local_item_offset];
 		uint64_t  item   = (uint64_t)(*p_item);//not actual value, but value with potentially junk bits coming from next value, which are discarded
 
+#ifdef _MSC_VER
 		if (item & (1i64 << bit_idx)) {//64 bit shift, MSVC complains otherwise
+#else
+		if (item & (1 << bit_idx)) {
+#endif//_MSC_VER
 			
 			memcpy(
 				&((char*)p_src)[_next_src_left_offset],
@@ -204,7 +210,13 @@ uint8_t rainingSegregate(
 		uint64_t* p_item = (uint64_t*)&((char*)p_dst)[item_offset];
 		uint64_t    item = (*p_item);
 
-		if (item & (1i64 << sign_bit)) {//save negative numbers at unused p_src memory
+		//save negative numbers at unused p_src memory
+#ifdef _MSC_VER
+		if (item & (1i64 << sign_bit)) {
+#else
+		if (item & (1 << sign_bit)) {
+#endif//_MSC_VER
+
 			memcpy(
 				&((char*)p_src)[item_offset],
 				p_item,
