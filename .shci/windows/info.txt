@@ -1,0 +1,8 @@
+repo_name=raining-jobs
+repo_dir=./
+
+prerequisites=.shci/windows/prerequisites.sh
+prerequisites_output=.shci/windows/prerequisites-output.txt
+
+build=.shci/windows/build.sh
+build_output=.shci/windows/build-output.txt

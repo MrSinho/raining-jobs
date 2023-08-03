@@ -3,27 +3,22 @@ add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
 
 
 
-add_subdirectory(externals/shthreads)
-add_subdirectory(externals/shvulkan)
-
-
 #||||       ||||
 #||||PROJECT||||
 #||||       ||||
-project(raining-threads C)
+project(raining-jobs C)
 
 
 
 #||||       ||||
 #||||LIBRARY||||
 #||||       ||||
-function(build_raining_threads)
-add_library(raining-threads raining-threads/src/rainingThreads.c)
-target_include_directories(raining-threads PUBLIC 
-    ${CMAKE_CURRENT_SOURCE_DIR}/raining-threads/include
+function(build_raining_jobs)
+add_library(raining-jobs raining-jobs/src/rainingJobs.c)
+target_include_directories(raining-jobs PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}/raining-jobs/include
 )
-target_link_libraries(raining-threads PUBLIC shthreads shvulkan)
-set_target_properties(raining-threads PROPERTIES
+set_target_properties(raining-jobs PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin
 )
 endfunction()
@@ -33,14 +28,12 @@ endfunction()
 #||||        ||||
 #||||EXAMPLES||||
 #||||        ||||
-function(build_raining_threads_examples)
-add_executable(raining-threads-cpu-example examples/src/cpu-threads.c)
-add_executable(raining-threads-gpu-compute examples/src/gpu-compute.c)
+function(build_raining_jobs_examples)
+add_executable(raining-example examples/src/raining-example.c)
 
-target_link_libraries(raining-threads-cpu-example PUBLIC raining-threads)
-target_link_libraries(raining-threads-gpu-compute PUBLIC raining-threads)
+target_link_libraries(raining-example PUBLIC raining-jobs)
 
-set_target_properties(raining-threads-cpu-example raining-threads-gpu-compute PROPERTIES
+set_target_properties(raining-example PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin
     VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/bin
 )
@@ -59,7 +52,7 @@ endif(UNIX)
 #||||     ||||
 #||||FLAGS||||
 #||||     ||||
-option(RAINING_THREADS_BUILD_EXAMPLES CACHE OFF)
+option(RAINING_JOBS_BUILD_EXAMPLES CACHE OFF)
 
 
 
@@ -67,10 +60,10 @@ option(RAINING_THREADS_BUILD_EXAMPLES CACHE OFF)
 #||||MAIN||||
 #||||    ||||
 function(main)
-build_raining_threads()
-if (RAINING_THREADS_BUILD_EXAMPLES)
-build_raining_threads_examples()
-endif(RAINING_THREADS_BUILD_EXAMPLES)
+build_raining_jobs()
+if (RAINING_JOBS_BUILD_EXAMPLES)
+build_raining_jobs_examples()
+endif(RAINING_JOBS_BUILD_EXAMPLES)
 endfunction()
 
 

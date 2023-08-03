@@ -1,6 +1,0 @@
-[submodule "externals/shthreads"]
-	path = externals/shthreads
-	url = https://github.com/mrsinho/shthreads.git
-[submodule "externals/shvulkan"]
-	path = externals/shvulkan
-	url = https://github.com/mrsinho/shvulkan
