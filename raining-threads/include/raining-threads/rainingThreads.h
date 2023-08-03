@@ -19,6 +19,8 @@ extern "C" {
 		failure_expression;\
 	}
 
+#define RAINING_TRUE  1
+#define RAINING_FALSE 0
 
 
 typedef struct RainingHost {
@@ -53,7 +55,7 @@ extern uint8_t rainingComputeInit(
 
 extern uint32_t rainingUnit(
 	uint32_t          memory_type_size_bytes,
-	uint8_t           is_signed,
+	uint8_t           are_negative,
 	uint32_t          src_length,
 	uint32_t          src_size,
 	uint32_t          src_offset,

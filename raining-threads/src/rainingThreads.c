@@ -34,7 +34,7 @@ uint8_t rainingComputeInit(
 
 uint32_t rainingUnit(
 	uint32_t          memory_type_size_bytes,
-	uint8_t           is_signed,
+	uint8_t           are_negative,
 	uint32_t          src_length,
 	uint32_t          src_size,
 	uint32_t          src_offset,
@@ -59,7 +59,7 @@ uint32_t rainingUnit(
 		uint64_t* p_item = (uint64_t*)&((char*)p_src)[src_offset + local_item_offset];
 		uint64_t item = (uint64_t)(*p_item);//not actual value, but value with potentially junk bits coming from next value, which are discarded
 
-		if (!is_signed) {//unsigned, standard process
+		if (!are_negative) {//positive or unsigned, standard process
 
 			if (item & (1i64 << bit_idx)) {//64 bit shift, MSVC complains otherwise
 				
@@ -82,7 +82,7 @@ uint32_t rainingUnit(
 				_next_src_right_offset -= item_size;
 			}
 		}
-		else if (is_signed && item < 0) {//unsigned and negative, reverse process
+		else if (are_negative && item < 0) {//signed and negative, reverse process
 			
 		}
 

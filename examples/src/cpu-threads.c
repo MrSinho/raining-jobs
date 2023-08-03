@@ -9,8 +9,8 @@ extern "C" {
 
 
 #define SRC_LENGTH ((int)5)
-#define ITEM_SIZE  sizeof(uint32_t)
-
+#define ITEM_SIZE  sizeof(uint64_t)
+#define RAINING_GET_START_BIT(type_size_bytes) ((type_size_bytes) * 8 - 1)
 
 //I PREFER CALLING THIS RAIN INSTEAD OF RECURSION
 //BECAUSE IT SOUNDS MORE CREATIVE
@@ -55,7 +55,7 @@ void rainingWorkGroup(
 
 	left_count = rainingUnit(
 		memory_type_size_bytes, //memory_type_size_bytes
-		is_signed,              //is_signed
+		RAINING_FALSE,          //are_negative
 		src_length,             //src_length
 		src_size,               //src_size
 		src_offset,             //src_offset
@@ -79,7 +79,9 @@ void rainingWorkGroup(
 
 	}//after that, do the last checks if anything changed
 
-
+	if (start_bit == 8) {
+		puts("stop here");
+	}
 
 	if (left_count > 1 && start_bit > 0) {//need to discriminate between at least two numbers, continue, invert dst and src
 
@@ -102,7 +104,11 @@ void rainingWorkGroup(
 	}
 	else if (left_count == 1) {//successfully isolated one number, and found the index of the number
 
-		((char*)p_dst)[next_src_left_offset % src_original_size] = ((char*)p_src)[next_src_left_offset];
+		memcpy(
+			&((char*)p_dst)[next_src_left_offset % src_original_size],
+			&((char*)p_src)[next_src_left_offset],
+			item_size
+		);
 
 	}
 
@@ -129,7 +135,11 @@ void rainingWorkGroup(
 	}
 	else if (right_count == 1) {//successfully isolated one number, and found the index of the number
 
-		((char*)p_dst)[next_src_right_offset % src_original_size] = ((char*)p_src)[next_src_right_offset];
+		memcpy(
+			&((char*)p_dst)[next_src_right_offset % src_original_size],
+			&((char*)p_src)[next_src_right_offset],
+			item_size
+		);
 
 	}
 
@@ -139,30 +149,35 @@ void rainingWorkGroup(
 
 int main(void) {
 
-	uint32_t src[SRC_LENGTH * 2] = {//double size
+	uint64_t src[SRC_LENGTH * 2] = {//double size
 		//153, 224, 189, 23, 7  //OK
 		//1, 8, 2, 184, 81  //OK
 		//255, 165, 84, 132, 11  //OK
 		//7, 49, 113, 165, 98 //OK
 		//34, 32, 89, 156, 34 //OK
 		//1, 1, 32, 123, 79//OK
-		1, 32, 98, 123, 123//OK
+		//1, 32, 98, 123, 123//OK
+		//256, 23, 46, 99, 2 //OK
+		255456, 10000000000000, 4854897489, 123, 2 //OK
 	};
 
-	uint32_t dst[SRC_LENGTH] = { 0 };
+	uint64_t dst[SRC_LENGTH] = { 0 };
 	
+	//max number of iterations = SRC_LENGTH * bit_resolution
+	//total memory usage       = src original size * 3
+	//
 	rainingWorkGroup(
-		4,//memory_type_size_bytes
-		0,//is_signed
-		31,//start_bit
-		SRC_LENGTH, 
-		SRC_LENGTH * ITEM_SIZE, 
+		8,                                      //memory_type_size_bytes
+		RAINING_FALSE,                          //is_signed
+		63,                                     //start_bit
+		SRC_LENGTH,                             //src_length
+		SRC_LENGTH * ITEM_SIZE,                 //src_size
 		SRC_LENGTH * ITEM_SIZE,                 //next_src_left_offset
 		SRC_LENGTH * ITEM_SIZE * 2 - ITEM_SIZE, //next_src_right_offset
-		0, 
-		src,
-		dst,
-		SRC_LENGTH * ITEM_SIZE
+		0,                                      //src_offset
+		src,                                    //p_src
+		dst,                                    //p_dst
+		SRC_LENGTH * ITEM_SIZE                  //src_original_sizes
 	);
 
 	return 0;
