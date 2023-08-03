@@ -15,8 +15,13 @@ _See the windows and linux build logs:_
 
 ## Build and implementation
 
-```
-	
+```bash
+git clone --recursive https://github.com/mrsinho/raining-jobs.git
+cd raining-jobs
+mkdir build
+cd build
+cmake .. -DRAINING_JOBS_BUILD_EXAMPLES=ON
+cmake --build .
 ```
 
 See the [`raining-example.c`](./examples/src/raining-example.c) for reference.
