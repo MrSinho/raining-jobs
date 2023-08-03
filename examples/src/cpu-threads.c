@@ -252,7 +252,7 @@ int main(void) {
 
 	rainingSegregate(
 		RAINING_TRUE,
-		7,
+		63,
 		ITEM_SIZE,
 		sizeof(dst),
 		src,
