@@ -14,6 +14,11 @@ extern "C" {
 
 #define RAINING_TRUE  1
 #define RAINING_FALSE 0
+#define RAINING_ENABLE_MULTITHREADING 1
+
+#if RAINING_ENABLE_MULTITHREADING == 1
+#include <shthreads/shThreads.h>
+#endif//RAINING_ENABLE_MULTITHREADING
 
 
 
@@ -26,9 +31,12 @@ extern "C" {
 
 
 typedef struct RainHost {
-	uint32_t     item_size_bytes;
-	uint32_t     src_length;
-	uint8_t      is_type_signed;
+	uint32_t item_size_bytes;
+	uint32_t src_length;
+	uint8_t  is_type_signed;
+#if RAINING_ENABLE_MULTITHREADING == 1
+	ShMutex  thread_mutex;
+#endif//RAINING_ENABLE_MULTITHREADING
 } RainHost;
 
 
@@ -82,6 +90,11 @@ extern uint8_t rainingHostSubmit(
 	RainHost* p_host,
 	void*     p_src,
 	void*     p_dst
+);
+
+extern uint8_t rainingHostWaitForAll(
+	RainHost* p_host,
+	uint64_t  timeout_ms
 );
 
 extern uint8_t rainingHostRelease(

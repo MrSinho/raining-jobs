@@ -24,6 +24,9 @@ uint8_t rainingHostInit(
 
 	(*p_host) = host;
 
+#if RAINING_ENABLE_MULTITHREADING
+	shAllocateMutexes(1, );
+#endif//RAINING_ENABLE_MULTITHREADING
 	//max number of iterations = src_length * bit_resolution
 	//total memory usage       = item_size_bytes * src_length * 3
 	
@@ -305,6 +308,14 @@ uint8_t rainingHostSubmit(
 		p_host->src_length * p_host->item_size_bytes, //dst_size
 		p_dst                                         //p_dst
 	);
+
+	return 1;
+}
+
+uint8_t rainingHostWaitForAll(
+	RainHost* p_host,
+	uint64_t  timeout_ms
+) {
 
 	return 1;
 }

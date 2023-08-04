@@ -8,7 +8,7 @@ extern "C" {
 #include <time.h>
 
 
-#define SRC_LENGTH  ((int)100)
+#define SRC_LENGTH  ((int)5)
 #define DEBUG_PRINT 1
 
 
