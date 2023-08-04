@@ -14,9 +14,9 @@ extern "C" {
 
 #define RAINING_TRUE  1
 #define RAINING_FALSE 0
-#define RAINING_ENABLE_MULTITHREADING 1
+#define RAINING_ENABLE_MULTITHREADING 0
 
-#if RAINING_ENABLE_MULTITHREADING == 1
+#if RAINING_ENABLE_MULTITHREADING
 #include <shthreads/shThreads.h>
 #endif//RAINING_ENABLE_MULTITHREADING
 
@@ -31,11 +31,14 @@ extern "C" {
 
 
 typedef struct RainHost {
-	uint32_t item_size_bytes;
-	uint32_t src_length;
-	uint8_t  is_type_signed;
+	uint32_t      item_size_bytes;
+	uint32_t      src_length;
+	uint8_t       is_type_signed;
 #if RAINING_ENABLE_MULTITHREADING == 1
-	ShMutex  thread_mutex;
+	ShThreadPool  thread_pool; //safe, a copy is submitted
+	uint32_t      thread_count;//unsafe, shared
+	ShMutex       mutex;       //safe, it's a mutex
+	uint64_t*     p_exit_codes;
 #endif//RAINING_ENABLE_MULTITHREADING
 } RainHost;
 
@@ -52,6 +55,11 @@ typedef struct RainingWorkGroupInfo {
 	void*         p_src;
 	uint32_t      dst_size;
 	void*         p_dst;
+#if RAINING_ENABLE_MULTITHREADING == 1
+	uint32_t*     p_thread_count; //shared, stored at RainHost
+	ShThreadPool* p_thread_pool;  //shared, stored at RainHost
+	ShMutex       mutex;
+#endif//RAINING_ENABLE_MULTITHREADING
 } RainingWorkGroupInfo;
 
 

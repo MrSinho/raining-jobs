@@ -25,7 +25,20 @@ uint8_t rainingHostInit(
 	(*p_host) = host;
 
 #if RAINING_ENABLE_MULTITHREADING
-	shAllocateMutexes(1, );
+	uint32_t max_thread_count = src_length * item_size_bytes * 8;
+
+	shAllocateThreads(max_thread_count, &p_host->thread_pool);
+
+	p_host->p_exit_codes = calloc(max_thread_count, sizeof(uint64_t));
+
+	rainingError(
+		p_host->p_exit_codes == NULL,
+		"invalid exit codes memory", 
+		return 0
+	);
+
+	shCreateMutexes(1, &p_host->mutex);
+
 #endif//RAINING_ENABLE_MULTITHREADING
 	//max number of iterations = src_length * bit_resolution
 	//total memory usage       = item_size_bytes * src_length * 3
@@ -36,6 +49,9 @@ uint8_t rainingHostInit(
 uint64_t rainingWorkGroup(
 	RainingWorkGroupInfo* p_info
 ) {
+#if RAINING_ENABLE_MULTITHREADING
+	shWaitForMutexes(0, 1, UINT64_MAX, &p_info->mutex);
+#endif//RAINING_ENABLE_MULTITHREADING
 
 	rainingError(
 		p_info == NULL,
@@ -88,9 +104,42 @@ uint64_t rainingWorkGroup(
 			p_info->next_src_left_offset,                            //src_offset
 			p_info->p_src,                                           //p_src
 			p_info->dst_size,                                        //dst_size
-			p_info->p_dst                                            //p_dst
+			p_info->p_dst,                                           //p_dst
 		};
 		
+#if RAINING_ENABLE_MULTITHREADING
+		if (right_count > 1) {//otherwise there's no need to create a new thread
+			
+			next_group_info.p_thread_count = p_info->p_thread_count;
+			next_group_info.p_thread_pool  = p_info->p_thread_pool;
+			next_group_info.mutex          = p_info->mutex;
+
+			shCreateThread(
+				*p_info->p_thread_count, //idx
+				&rainingWorkGroup,       //p_func
+				1024,                    //stack_size
+				p_info->p_thread_pool    //p_pool
+			);
+
+			ShThreadParameters parameters[1] = { &next_group_info };
+
+			shLaunchThreads(
+				(*p_info->p_thread_count), //first_thread
+				1,                         //thread_count
+				parameters,                //p_parameters
+				p_info->p_thread_pool      //p_pool
+			);
+
+			(*p_info->p_thread_count)++;
+
+		}
+		else {
+			rainingWorkGroup(
+				&next_group_info //p_info
+			);
+		}
+#endif//RAINING_ENABLE_MULTITHREADING
+
 		rainingWorkGroup(
 			&next_group_info //p_info
 		);
@@ -139,6 +188,10 @@ uint64_t rainingWorkGroup(
 		);
 
 	}
+
+#if RAINING_ENABLE_MULTITHREADING
+	shUnlockMutexes(0, 1, &p_info->mutex);
+#endif//RAINING_ENABLE_MULTITHREADING
 
 	return 1;//reached max number of bits or all numbers have been isolated from the work group
 }
@@ -280,6 +333,10 @@ uint8_t rainingHostSubmit(
 ) {
 	rainingError(p_host == NULL, "rainingHostSubmit: invalid raining host memory", return 0);
 
+#if RAINING_ENABLE_MULTITHREADING
+	ShThreadPool copy_thread_pool = p_host->thread_pool;
+#endif//RAINING_ENABLE_MULTITHREADING
+
 	RainingWorkGroupInfo start_group_info = {
 		p_host->item_size_bytes,                                                   //memory_type_size_bytes
 		p_host->item_size_bytes * 8 - 1,                                           //start_bit
@@ -290,12 +347,30 @@ uint8_t rainingHostSubmit(
 		0,                                                                         //src_offset
 		p_src,                                                                     //p_src
 		p_host->src_length* p_host->item_size_bytes,                               //dst_size
-		p_dst                                                                      //p_dst
+		p_dst,                                                                     //p_dst
+#if RAINING_ENABLE_MULTITHREADING
+		&p_host->thread_count,  /*unsafe*/                                         //p_thread_count
+		&copy_thread_pool,      /*safe, it has been copied for a reason*/          //p_thread_pool
+		&p_host->mutex,         /*safe, it's a mutex*/                             //mutex
+#endif//RAINING_ENABLE_MULTITHREADING
 	};
 
 	rainingWorkGroup(
 		&start_group_info //p_info
 	);
+
+#if RAINING_ENABLE_MULTITHREADING
+
+	shWaitForThreads(
+		0,                                //first_thread
+		p_host->thread_pool.thread_count, //thread_count
+		UINT64_MAX,                       //timeout_ms
+		p_host->p_exit_codes,             //p_exit_codes
+		&p_host->thread_pool              //p_pool
+	);
+
+#endif//RAINING_ENABLE_MULTITHREADING
+
 
 	if (!p_host->is_type_signed) {
 		return 1;

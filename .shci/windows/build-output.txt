@@ -6,18 +6,17 @@
 -- Check for working C compiler: D:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/cl.exe - skipped
 -- Detecting C compile features
 -- Detecting C compile features - done
--- Configuring done (4.4s)
+-- Selecting Windows SDK version 10.0.22000.0 to target Windows 10.0.22621.
+-- Configuring done (5.2s)
 -- Generating done (0.1s)
 -- Build files have been written to: D:/home/desktop/GitHub/raining-jobs/windows
 MSBuild version 17.6.3+07e294721 for .NET Framework
 
   Checking Build System
+  Building Custom Rule D:/home/desktop/GitHub/raining-jobs/externals/shthreads/CMakeLists.txt
+  shthreads.c
+  shthreads.vcxproj -> D:\home\desktop\GitHub\raining-jobs\bin\Debug\shthreads.lib
   Building Custom Rule D:/home/desktop/GitHub/raining-jobs/CMakeLists.txt
   rainingJobs.c
-D:\home\desktop\GitHub\raining-jobs\raining-jobs\src\rainingJobs.c(64,3): warning C4013: 'memcpy' non definita. Verr… considerata come esterna che restituisce un int. [D:\home\desktop\GitHub\raining-jobs\windows\raining-jobs.vcxproj]
-D:\home\desktop\GitHub\raining-jobs\raining-jobs\src\rainingJobs.c(305,2): warning C4013: 'memset' non definita. Verr… considerata come esterna che restituisce un int. [D:\home\desktop\GitHub\raining-jobs\windows\raining-jobs.vcxproj]
-  raining-jobs.vcxproj -> D:\home\desktop\GitHub\raining-jobs\bin\Debug\raining-jobs.lib
-  Building Custom Rule D:/home/desktop/GitHub/raining-jobs/CMakeLists.txt
-  raining-example.c
-  raining-example.vcxproj -> D:\home\desktop\GitHub\raining-jobs\bin\Debug\raining-example.exe
-  Building Custom Rule D:/home/desktop/GitHub/raining-jobs/CMakeLists.txt
+D:\home\desktop\GitHub\raining-jobs\raining-jobs\src\rainingJobs.c(28,2): warning C4013: 'shAllocateMutexes' non definita. Verr… considerata come esterna che restituisce un int. [D:\home\desktop\GitHub\raining-jobs\windows\raining-jobs.vcxproj]
+D:\home\desktop\GitHub\raining-jobs\raining-jobs\src\rainingJobs.c(28,23): error C2059: errore di sintassi: ')' [D:\home\desktop\GitHub\raining-jobs\windows\raining-jobs.vcxproj]
