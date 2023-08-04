@@ -1,3 +1,6 @@
 [submodule ".shci/shci"]
 	path = .shci/shci
 	url = https://github.com/mrsinho/shci
+[submodule "externals/shthreads"]
+	path = externals/shthreads
+	url = https://github.com/mrsinho/shthreads
