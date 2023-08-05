@@ -28,16 +28,20 @@ See the [`raining-example.c`](./examples/src/raining-example.c) for reference.
 
 ---
 
-## Dealing with negative numbers
+## Known issues and dealing with negative numbers
+
+With positive floating point numbers and unsigned integers, no issues have been found, whereas negative numbers are stored differently on memory based on architecture, operating system, cpu, etc... 
+
+
+|Storage type          | Supported data types                                                                            | 
+|----------------------|-------------------------------------------------------------------------------------------------|
+|Magnitude complement  | `UINT8` `UINT16` `UINT32` `UINT64` (always) `float32` `double64` (on some system positive only) |
+|One complement (todo) | all integers, all signed floating point data types                                              |
+|Two complement (todo) | all integers, all signed floating point data types                                              |
+
 
 2's complement
 1's complement
-Magnitude complement --> done
-
----
-
-## Known issues
-
-There is certainly room for improvements. The algorithm was first meant to be used within a multi-threading library, since it was designed to not create conflicts with read-write operations between multiple threads. Currently the library runs on the main application thread only.
+Magnitude complement --> only feature implemented
 
 ---
