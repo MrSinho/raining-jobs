@@ -28,6 +28,14 @@ See the [`raining-example.c`](./examples/src/raining-example.c) for reference.
 
 ---
 
+## Dealing with negative numbers
+
+2's complement
+1's complement
+Magnitude complement --> done
+
+---
+
 ## Known issues
 
 There is certainly room for improvements. The algorithm was first meant to be used within a multi-threading library, since it was designed to not create conflicts with read-write operations between multiple threads. Currently the library runs on the main application thread only.

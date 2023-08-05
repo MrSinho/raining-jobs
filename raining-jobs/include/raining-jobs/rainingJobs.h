@@ -14,11 +14,6 @@ extern "C" {
 
 #define RAINING_TRUE  1
 #define RAINING_FALSE 0
-#define RAINING_ENABLE_MULTITHREADING 0
-
-#if RAINING_ENABLE_MULTITHREADING
-#include <shthreads/shThreads.h>
-#endif//RAINING_ENABLE_MULTITHREADING
 
 
 
@@ -34,12 +29,6 @@ typedef struct RainHost {
 	uint32_t      item_size_bytes;
 	uint32_t      src_length;
 	uint8_t       is_type_signed;
-#if RAINING_ENABLE_MULTITHREADING == 1
-	ShThreadPool  thread_pool; //safe, a copy is submitted
-	uint32_t      thread_count;//unsafe, shared
-	ShMutex       mutex;       //safe, it's a mutex
-	uint64_t*     p_exit_codes;
-#endif//RAINING_ENABLE_MULTITHREADING
 } RainHost;
 
 
@@ -55,11 +44,6 @@ typedef struct RainingWorkGroupInfo {
 	void*         p_src;
 	uint32_t      dst_size;
 	void*         p_dst;
-#if RAINING_ENABLE_MULTITHREADING == 1
-	uint32_t*     p_thread_count; //shared, stored at RainHost
-	ShThreadPool* p_thread_pool;  //shared, stored at RainHost
-	ShMutex       mutex;
-#endif//RAINING_ENABLE_MULTITHREADING
 } RainingWorkGroupInfo;
 
 
@@ -75,12 +59,13 @@ extern uint64_t rainingWorkGroup(
 	RainingWorkGroupInfo* p_info
 );
 
+#define RAINING_GET_NEGATIVE_STORAGE_SYSTEM 
+
 extern uint32_t rainingUnit(
-	uint32_t memory_type_size_bytes,
 	uint32_t src_length,
 	uint32_t src_size,
 	uint32_t src_offset,
-	uint8_t* p_src,
+	void*    p_src,
 	uint32_t next_src_left_offset,
 	uint32_t next_src_right_offset,
 	uint32_t bit_idx

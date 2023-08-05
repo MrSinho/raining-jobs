@@ -8,26 +8,30 @@ extern "C" {
 #include <time.h>
 
 
-#define SRC_LENGTH  ((int)5)
+#define SRC_LENGTH  ((int)10)
 #define DEBUG_PRINT 1
 
 
 int main(void) {
 
-	float* src = (float*)calloc(SRC_LENGTH * 2, sizeof(float));
-	float* dst = (float*)calloc(SRC_LENGTH * 2, sizeof(float));
+	uint32_t* src = (uint32_t*)calloc(SRC_LENGTH * 2, sizeof(uint32_t));
+	uint32_t* dst = (uint32_t*)calloc(SRC_LENGTH * 2, sizeof(uint32_t));
 
 	rainingError(src == NULL, "main: invalid src memory", return -1);
 	rainingError(dst == NULL, "main: invalid dst memory", return -1);
 
+	//for (uint32_t i = 0; i < SRC_LENGTH; i++) {
+	//	src[i] = (float)rand() / (float)rand() * (float)(i % 2 == 0 ? -1 : 1);
+	//}
+
 	for (uint32_t i = 0; i < SRC_LENGTH; i++) {
-		src[i] = (float)rand() / (float)rand() * (float)(i % 2 == 0 ? -1 : 1);
+		src[i] = rand() % rand() * (i % 2 == 0 ? -1 : 1);
 	}
 
 #if DEBUG_PRINT == 1
 	printf("\n\n\n\tSRC:\n\n");
 	for (uint32_t i = 0; i < SRC_LENGTH; i++) {
-		printf("%i: %f\n", i, src[i]);
+		printf("%i: %i\n", i, src[i]);
 	}
 #endif//DEBUG_PRINT
 
@@ -60,7 +64,7 @@ int main(void) {
 #if DEBUG_PRINT == 1
 	printf("\n\n\n\tDST:\n\n");
 	for (uint32_t i = 0; i < SRC_LENGTH; i++) {
-		printf("%i: %f\n", i, dst[i]);
+		printf("%i: %i\n", i, dst[i]);
 	}
 #endif//DEBUG_PRINT
 

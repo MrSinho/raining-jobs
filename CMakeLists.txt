@@ -49,10 +49,8 @@ endfunction()
 #||||           ||||
 if (WIN32)
 else()
+    add_compile_options(-Wall -Wextra -Wpedantic)
 endif(WIN32)
-if(UNIX)
-else()
-endif(UNIX)
 
 #||||     ||||
 #||||FLAGS||||

@@ -24,22 +24,6 @@ uint8_t rainingHostInit(
 
 	(*p_host) = host;
 
-#if RAINING_ENABLE_MULTITHREADING
-	uint32_t max_thread_count = src_length * item_size_bytes * 8;
-
-	shAllocateThreads(max_thread_count, &p_host->thread_pool);
-
-	p_host->p_exit_codes = calloc(max_thread_count, sizeof(uint64_t));
-
-	rainingError(
-		p_host->p_exit_codes == NULL,
-		"invalid exit codes memory", 
-		return 0
-	);
-
-	shCreateMutexes(1, &p_host->mutex);
-
-#endif//RAINING_ENABLE_MULTITHREADING
 	//max number of iterations = src_length * bit_resolution
 	//total memory usage       = item_size_bytes * src_length * 3
 	
@@ -49,15 +33,21 @@ uint8_t rainingHostInit(
 uint64_t rainingWorkGroup(
 	RainingWorkGroupInfo* p_info
 ) {
-#if RAINING_ENABLE_MULTITHREADING
-	shWaitForMutexes(0, 1, UINT64_MAX, &p_info->mutex);
-#endif//RAINING_ENABLE_MULTITHREADING
-
 	rainingError(
 		p_info == NULL,
 		"rainingWorkGroup: invalid info memory",
 		return 0
 	);
+
+	puts("\n");
+	printf("start_bit:              %i\n", p_info->start_bit);
+	printf("src_length:             %i\n", p_info->src_length);
+	printf("src_size:               %i\n", p_info->src_size);
+	printf("next_src_left_offset:   %i\n", p_info->next_src_left_offset);
+	printf("next_src_right_offset:  %i\n", p_info->next_src_right_offset);
+	printf("src_offset:             %i\n", p_info->src_offset);
+	printf("dst_size:               %i\n", p_info->dst_size);
+
 
 	uint32_t left_count  = 0;
 	uint32_t right_count = 0;
@@ -66,25 +56,29 @@ uint64_t rainingWorkGroup(
 
 
 	left_count = rainingUnit(
-		p_info->memory_type_size_bytes, //memory_type_size_bytes
-		p_info->src_length,             //src_length
-		p_info->src_size,               //src_size
-		p_info->src_offset,             //src_offset
-		p_info->p_src,                  //p_src
-		p_info->next_src_left_offset,   //next_src_left_offset
-		p_info->next_src_right_offset,  //next_src_right_offset
-		p_info->start_bit               //bit_idx
+		p_info->src_length,            //src_length
+		p_info->src_size,              //src_size
+		p_info->src_offset,            //src_offset
+		p_info->p_src,                 //p_src
+		p_info->next_src_left_offset,  //next_src_left_offset
+		p_info->next_src_right_offset, //next_src_right_offset
+		p_info->start_bit              //bit_idx
 	);
 
 	right_count = p_info->src_length - left_count;
 	
-
+	printf("left_count:  %i\n", left_count);
+	printf("right_count: %i\n", right_count);
+	puts("\n");
 
 	if (p_info->start_bit == 0) {//copy duplicates to destination memory
 
+		uint8_t* _p_dst = (uint8_t*)p_info->p_dst;
+		uint8_t* _p_src = (uint8_t*)p_info->p_src;
+
 		memcpy(
-			&((char*)p_info->p_dst)[p_info->src_offset % p_info->dst_size],
-			&((char*)p_info->p_src)[p_info->src_offset],
+			&_p_dst[p_info->src_offset % p_info->dst_size],
+			&_p_src[p_info->src_offset],
 			p_info->src_size
 		);
 
@@ -107,39 +101,6 @@ uint64_t rainingWorkGroup(
 			p_info->p_dst,                                           //p_dst
 		};
 		
-#if RAINING_ENABLE_MULTITHREADING
-		if (right_count > 1) {//otherwise there's no need to create a new thread
-			
-			next_group_info.p_thread_count = p_info->p_thread_count;
-			next_group_info.p_thread_pool  = p_info->p_thread_pool;
-			next_group_info.mutex          = p_info->mutex;
-
-			shCreateThread(
-				*p_info->p_thread_count, //idx
-				&rainingWorkGroup,       //p_func
-				1024,                    //stack_size
-				p_info->p_thread_pool    //p_pool
-			);
-
-			ShThreadParameters parameters[1] = { &next_group_info };
-
-			shLaunchThreads(
-				(*p_info->p_thread_count), //first_thread
-				1,                         //thread_count
-				parameters,                //p_parameters
-				p_info->p_thread_pool      //p_pool
-			);
-
-			(*p_info->p_thread_count)++;
-
-		}
-		else {
-			rainingWorkGroup(
-				&next_group_info //p_info
-			);
-		}
-#endif//RAINING_ENABLE_MULTITHREADING
-
 		rainingWorkGroup(
 			&next_group_info //p_info
 		);
@@ -147,9 +108,12 @@ uint64_t rainingWorkGroup(
 	}
 	else if (left_count == 1) {//successfully isolated one number, and found the index of the number
 
+		uint8_t* _p_dst = (uint8_t*)p_info->p_dst;
+		uint8_t* _p_src = (uint8_t*)p_info->p_src;
+		
 		memcpy(
-			&((char*)p_info->p_dst)[p_info->next_src_left_offset % p_info->dst_size],
-			&((char*)p_info->p_src)[p_info->next_src_left_offset],
+			&_p_dst[p_info->next_src_left_offset % p_info->dst_size],
+			&_p_src[p_info->next_src_left_offset],
 			item_size
 		);
 
@@ -181,27 +145,25 @@ uint64_t rainingWorkGroup(
 	}
 	else if (right_count == 1) {//successfully isolated one number, and found the index of the number
 
+		uint8_t* _p_dst = (uint8_t*)p_info->p_dst;
+		uint8_t* _p_src = (uint8_t*)p_info->p_src;
+
 		memcpy(
-			&((char*)p_info->p_dst)[p_info->next_src_right_offset % p_info->dst_size],
-			&((char*)p_info->p_src)[p_info->next_src_right_offset],
+			&_p_dst[p_info->next_src_right_offset % p_info->dst_size],
+			&_p_src[p_info->next_src_right_offset],
 			item_size
 		);
 
 	}
 
-#if RAINING_ENABLE_MULTITHREADING
-	shUnlockMutexes(0, 1, &p_info->mutex);
-#endif//RAINING_ENABLE_MULTITHREADING
-
 	return 1;//reached max number of bits or all numbers have been isolated from the work group
 }
 
 uint32_t rainingUnit(
-	uint32_t memory_type_size_bytes,
 	uint32_t src_length,
 	uint32_t src_size,
 	uint32_t src_offset,
-	uint8_t* p_src,
+	void*    p_src,
 	uint32_t next_src_left_offset,
 	uint32_t next_src_right_offset,
 	uint32_t bit_idx
@@ -216,20 +178,22 @@ uint32_t rainingUnit(
 	for (uint32_t local_item_offset = 0; local_item_offset < src_size; local_item_offset += item_size) {
 		
 		//debug
-		//uint8_t* p_debug = (uint8_t*)&((char*)p_src)[src_offset + local_item_offset];
+		//uint8_t* p_debug = (uint8_t*)&((uint8_t*)p_src)[src_offset + local_item_offset];
 
 		//find memory address
-		uint64_t* p_item = (uint64_t*)&((char*)p_src)[src_offset + local_item_offset];
+		uint8_t* _p_src_as_bytes = (uint8_t*)p_src;
+
+		uint64_t* p_item = (uint64_t*)(&_p_src_as_bytes[src_offset + local_item_offset]);
 		uint64_t  item   = (uint64_t)(*p_item);//not actual value, but value with potentially junk bits coming from next value, which are discarded
 
 #ifdef _MSC_VER
-		if (item & (1i64 << bit_idx)) {//64 bit shift, MSVC complains otherwise
+		if ((uint64_t)(item & (1i64 << bit_idx)) == (uint64_t)(1i64 << bit_idx)) {//64 bit shift, MSVC complains otherwise
 #else
-		if (item & (1 << bit_idx)) {
+		if ((uint64_t)(item & (1 << bit_idx)) == (uint64_t)(1 << bit_idx)) {//for some reason gcc messed up here without the equal expression
 #endif//_MSC_VER
 			
 			memcpy(
-				&((char*)p_src)[_next_src_left_offset],
+				&_p_src_as_bytes[_next_src_left_offset],
 				p_item,
 				item_size
 			);
@@ -239,7 +203,7 @@ uint32_t rainingUnit(
 		}
 		else {
 			memcpy(
-				&((char*)p_src)[_next_src_right_offset],
+				&_p_src_as_bytes[_next_src_right_offset],
 				p_item,
 				item_size
 			);
@@ -263,18 +227,18 @@ uint8_t rainingSegregate(
 
 	for (uint32_t item_offset = 0; item_offset < dst_size; item_offset += item_size) {
 		
-		uint64_t* p_item = (uint64_t*)&((char*)p_dst)[item_offset];
+		uint64_t* p_item = (uint64_t*)&((uint8_t*)p_dst)[item_offset];
 		uint64_t    item = (*p_item);
 
 		//save negative numbers at unused p_src memory
 #ifdef _MSC_VER
-		if (item & (1i64 << sign_bit)) {
+		if ((uint64_t)(item & (1i64 << sign_bit)) == (uint64_t)(1i64 << sign_bit)) {
 #else
-		if (item & (1 << sign_bit)) {
+		if ((uint64_t)(item & (1 << sign_bit)) == (uint64_t)(1 << sign_bit)) {
 #endif//_MSC_VER
 
 			memcpy(
-				&((char*)p_src)[item_offset],
+				&((uint8_t*)p_src)[item_offset],
 				p_item,
 				item_size
 			);
@@ -292,13 +256,13 @@ uint8_t rainingSegregate(
 
 	for (uint32_t item_offset = (negative_count * item_size); item_offset < dst_size; item_offset += item_size) {
 
-		uint64_t* p_item = (uint64_t*)&((char*)p_dst)[item_offset];
-		uint64_t    item = (*p_item);
+		//uint64_t* p_item = (uint64_t*)&((uint8_t*)p_dst)[item_offset];
+		//uint64_t    item = (*p_item);
 
 		//shift positive numbers to the origin of dst
 		memcpy(
-			&((char*)p_dst)[shift_offset],
-			&((char*)p_dst)[item_offset],
+			&((uint8_t*)p_dst)[shift_offset],
+			&((uint8_t*)p_dst)[item_offset],
 			item_size
 		);
 		
@@ -310,13 +274,13 @@ uint8_t rainingSegregate(
 
 	for (; shift_offset < dst_size; shift_offset += item_size) {
 
-		uint64_t* p_item = (uint64_t*)&((char*)p_dst)[shift_offset];
-		uint64_t    item = (*p_item);
+		//uint64_t* p_item = (uint64_t*)&((uint8_t*)p_dst)[shift_offset];
+		//uint64_t    item = (*p_item);
 
 		//shift negative numbers to the end
 		memcpy(
-			&((char*)p_dst)[shift_offset],
-			&((char*)p_src)[negative_src_offset],
+			&((uint8_t*)p_dst)[shift_offset],
+			&((uint8_t*)p_src)[negative_src_offset],
 			item_size
 		);
 
@@ -333,56 +297,35 @@ uint8_t rainingHostSubmit(
 ) {
 	rainingError(p_host == NULL, "rainingHostSubmit: invalid raining host memory", return 0);
 
-#if RAINING_ENABLE_MULTITHREADING
-	ShThreadPool copy_thread_pool = p_host->thread_pool;
-#endif//RAINING_ENABLE_MULTITHREADING
-
 	RainingWorkGroupInfo start_group_info = {
-		p_host->item_size_bytes,                                                   //memory_type_size_bytes
-		p_host->item_size_bytes * 8 - 1,                                           //start_bit
-		p_host->src_length,                                                        //src_length
-		p_host->src_length* p_host->item_size_bytes,                               //src_size
-		p_host->src_length* p_host->item_size_bytes,                               //next_src_left_offset
-		p_host->src_length* p_host->item_size_bytes * 2 - p_host->item_size_bytes, //next_src_right_offset
-		0,                                                                         //src_offset
-		p_src,                                                                     //p_src
-		p_host->src_length* p_host->item_size_bytes,                               //dst_size
-		p_dst,                                                                     //p_dst
-#if RAINING_ENABLE_MULTITHREADING
-		&p_host->thread_count,  /*unsafe*/                                         //p_thread_count
-		&copy_thread_pool,      /*safe, it has been copied for a reason*/          //p_thread_pool
-		&p_host->mutex,         /*safe, it's a mutex*/                             //mutex
-#endif//RAINING_ENABLE_MULTITHREADING
+		p_host->item_size_bytes,                                                    //memory_type_size_bytes
+		p_host->item_size_bytes * 8 - 1,                                            //start_bit
+		p_host->src_length,                                                         //src_length
+		p_host->src_length * p_host->item_size_bytes,                               //src_size
+		p_host->src_length * p_host->item_size_bytes,                               //next_src_left_offset
+		p_host->src_length * p_host->item_size_bytes * 2 - p_host->item_size_bytes, //next_src_right_offset
+		0,                                                                          //src_offset
+		p_src,                                                                      //p_src
+		p_host->src_length * p_host->item_size_bytes,                               //dst_size
+		p_dst,                                                                      //p_dst
 	};
 
 	rainingWorkGroup(
 		&start_group_info //p_info
 	);
 
-#if RAINING_ENABLE_MULTITHREADING
-
-	shWaitForThreads(
-		0,                                //first_thread
-		p_host->thread_pool.thread_count, //thread_count
-		UINT64_MAX,                       //timeout_ms
-		p_host->p_exit_codes,             //p_exit_codes
-		&p_host->thread_pool              //p_pool
-	);
-
-#endif//RAINING_ENABLE_MULTITHREADING
-
 
 	if (!p_host->is_type_signed) {
 		return 1;
 	}
 
-	rainingSegregate(
-		p_host->item_size_bytes * 8 - 1,              //sign_bit
-		p_host->item_size_bytes,                      //item_size
-		p_src,                                        //p_src
-		p_host->src_length * p_host->item_size_bytes, //dst_size
-		p_dst                                         //p_dst
-	);
+	//rainingSegregate(
+	//	p_host->item_size_bytes * 8 - 1,              //sign_bit
+	//	p_host->item_size_bytes,                      //item_size
+	//	p_src,                                        //p_src
+	//	p_host->src_length * p_host->item_size_bytes, //dst_size
+	//	p_dst                                         //p_dst
+	//);
 
 	return 1;
 }
