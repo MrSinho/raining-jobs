@@ -30,6 +30,36 @@ uint8_t rainingHostInit(
 	return 1;
 }
 
+uint8_t rainingGetStorageType(
+	RainHost* p_host
+) {
+	rainingError(p_host == NULL, "rainingGetStorageType: invalid raining host memory", return 0);
+
+	int8_t i_negative_one_magnitude_complement = (int8_t)0b10000001;//last bit is sign bit
+	int8_t i_negative_one_one_complement       = (int8_t)0b11111110;// = invert all bits from positive
+	int8_t i_negative_one_two_complement       = (int8_t)0b11111111;// = one complement + 1 unit
+
+	if (i_negative_one_magnitude_complement == (int8_t)(-1)) {
+		p_host->storage_type |= RAIN_INT_STORAGE_TYPE_MAGNITUDE_COMPLEMENT;
+	}
+	else if (i_negative_one_one_complement == (int8_t)(-1)) {
+		p_host->storage_type |= RAIN_INT_STORAGE_TYPE_ONE_COMPLEMENT;
+	}
+	else if (i_negative_one_two_complement == (int8_t)(-1)) {
+		p_host->storage_type |= RAIN_INT_STORAGE_TYPE_TWO_COMPLEMENT;
+	}
+
+	//                                      sign        exponent
+	float f_negative_one_IEE_754 = (float)((1 << 31) | 1 << 23);
+	f_negative_one_IEE_754 = 0b10111111100000000000000000000000;
+
+	if (f_negative_one_IEE_754 == -1.0f) {
+		p_host->storage_type |= RAIN_FLOAT_STORAGE_TYPE_IEEE_754;
+	}
+
+	return 1;
+}
+
 uint64_t rainingWorkGroup(
 	RainingWorkGroupInfo* p_info
 ) {
@@ -39,14 +69,14 @@ uint64_t rainingWorkGroup(
 		return 0
 	);
 
-	puts("\n");
-	printf("start_bit:              %i\n", p_info->start_bit);
-	printf("src_length:             %i\n", p_info->src_length);
-	printf("src_size:               %i\n", p_info->src_size);
-	printf("next_src_left_offset:   %i\n", p_info->next_src_left_offset);
-	printf("next_src_right_offset:  %i\n", p_info->next_src_right_offset);
-	printf("src_offset:             %i\n", p_info->src_offset);
-	printf("dst_size:               %i\n", p_info->dst_size);
+	//puts("\n");
+	//printf("start_bit:              %i\n", p_info->start_bit);
+	//printf("src_length:             %i\n", p_info->src_length);
+	//printf("src_size:               %i\n", p_info->src_size);
+	//printf("next_src_left_offset:   %i\n", p_info->next_src_left_offset);
+	//printf("next_src_right_offset:  %i\n", p_info->next_src_right_offset);
+	//printf("src_offset:             %i\n", p_info->src_offset);
+	//printf("dst_size:               %i\n", p_info->dst_size);
 
 
 	uint32_t left_count  = 0;
@@ -67,9 +97,9 @@ uint64_t rainingWorkGroup(
 
 	right_count = p_info->src_length - left_count;
 	
-	printf("left_count:  %i\n", left_count);
-	printf("right_count: %i\n", right_count);
-	puts("\n");
+	//printf("left_count:  %i\n", left_count);
+	//printf("right_count: %i\n", right_count);
+	//puts("\n");
 
 	if (p_info->start_bit == 0) {//copy duplicates to destination memory
 
@@ -183,13 +213,13 @@ uint32_t rainingUnit(
 		//find memory address
 		uint8_t* _p_src_as_bytes = (uint8_t*)p_src;
 
-		uint64_t* p_item = (uint64_t*)(&_p_src_as_bytes[src_offset + local_item_offset]);
-		uint64_t  item   = (uint64_t)(*p_item);//not actual value, but value with potentially junk bits coming from next value, which are discarded
+		int64_t* p_item = (int64_t*)(&_p_src_as_bytes[src_offset + local_item_offset]);
+		int64_t  item   = (int64_t)(*p_item);//not actual value, but value with potentially junk bits coming from next value, which are discarded
 
 #ifdef _MSC_VER
-		if ((uint64_t)(item & (1i64 << bit_idx)) == (uint64_t)(1i64 << bit_idx)) {//64 bit shift, MSVC complains otherwise
+		if ((int64_t)(item & (1i64 << bit_idx)) == (int64_t)(1i64 << bit_idx)) {//64 bit shift, MSVC complains otherwise
 #else
-		if ((uint64_t)(item & (1 << bit_idx)) == (uint64_t)(1 << bit_idx)) {//for some reason gcc messed up here without the equal expression
+		if ((int64_t)(item & (1 << bit_idx)) == (int64_t)(1 << bit_idx)) {//for some reason gcc messed up here without the equal expression
 #endif//_MSC_VER
 			
 			memcpy(
@@ -319,13 +349,13 @@ uint8_t rainingHostSubmit(
 		return 1;
 	}
 
-	//rainingSegregate(
-	//	p_host->item_size_bytes * 8 - 1,              //sign_bit
-	//	p_host->item_size_bytes,                      //item_size
-	//	p_src,                                        //p_src
-	//	p_host->src_length * p_host->item_size_bytes, //dst_size
-	//	p_dst                                         //p_dst
-	//);
+	rainingSegregate(
+		p_host->item_size_bytes * 8 - 1,              //sign_bit
+		p_host->item_size_bytes,                      //item_size
+		p_src,                                        //p_src
+		p_host->src_length * p_host->item_size_bytes, //dst_size
+		p_dst                                         //p_dst
+	);
 
 	return 1;
 }

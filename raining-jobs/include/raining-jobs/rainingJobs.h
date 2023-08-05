@@ -25,10 +25,19 @@ extern "C" {
 
 
 
+typedef enum RainStorageType {
+	RAIN_INT_STORAGE_TYPE_MAGNITUDE_COMPLEMENT = 1 << 0,
+	RAIN_INT_STORAGE_TYPE_ONE_COMPLEMENT       = 1 << 1,
+	RAIN_INT_STORAGE_TYPE_TWO_COMPLEMENT       = 1 << 2,
+	RAIN_FLOAT_STORAGE_TYPE_IEEE_754           = 1 << 15
+} RainStorageType;
+
+
 typedef struct RainHost {
-	uint32_t      item_size_bytes;
-	uint32_t      src_length;
-	uint8_t       is_type_signed;
+	uint32_t        item_size_bytes;
+	uint32_t        src_length;
+	uint8_t         is_type_signed;
+	RainStorageType storage_type;
 } RainHost;
 
 
@@ -52,6 +61,10 @@ extern uint8_t rainingHostInit(
 	uint32_t  item_size_bytes,
 	uint32_t  src_length,
 	uint8_t   is_type_signed,
+	RainHost* p_host
+);
+
+extern uint8_t rainingGetStorageType(
 	RainHost* p_host
 );
 
