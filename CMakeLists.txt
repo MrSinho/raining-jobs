@@ -3,10 +3,6 @@ add_definitions(-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
 
 
 
-add_subdirectory(externals/shthreads)
-
-
-
 #||||       ||||
 #||||PROJECT||||
 #||||       ||||
@@ -22,7 +18,6 @@ add_library(raining-jobs raining-jobs/src/rainingJobs.c)
 target_include_directories(raining-jobs PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}/raining-jobs/include
 )
-target_link_libraries(raining-jobs PUBLIC shthreads)
 set_target_properties(raining-jobs PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin
 )
