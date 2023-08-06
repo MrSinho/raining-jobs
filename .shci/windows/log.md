@@ -15,7 +15,7 @@ max frequency : 3500.0 MHz
 cores         : 4
 ```
 
-build ran for `10.42 s` and terminated with exit code `0`
+build ran for `28.97 s` and terminated with exit code `0`
 
 ---
 
@@ -28,6 +28,23 @@ build ran for `10.42 s` and terminated with exit code `0`
 
 ```bash
 Chocolatey v2.0.0
+Chocolatey detected you are not running from an elevated command shell
+ (cmd/powershell).
+
+ You may experience errors - many functions/packages
+ require admin rights. Only advanced users should run choco w/out an
+ elevated shell. When you open the command shell, you should ensure
+ that you do so with "Run as Administrator" selected. If you are
+ attempting to use Chocolatey in a non-administrator setting, you
+ must select a different location other than the default install
+ location. See
+ https://docs.chocolatey.org/en-us/choco/setup#non-administrative-install
+ for details.
+
+For the question below, you have 20 seconds to make a selection.
+
+ Do you want to continue?([Y]es/[N]o): 
+Timeout or your choice of '' is not a valid selection.
 Installing the following packages:
 curl;mingw;cmake
 By installing, you accept licenses for the packages.
@@ -72,19 +89,15 @@ Warnings:
 -- Check for working C compiler: D:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.36.32532/bin/Hostx64/x64/cl.exe - skipped
 -- Detecting C compile features
 -- Detecting C compile features - done
--- Configuring done (4.4s)
--- Generating done (0.1s)
+-- Configuring done (4.7s)
+-- Generating done (0.2s)
 -- Build files have been written to: D:/home/desktop/GitHub/raining-jobs/windows
 MSBuild version 17.6.3+07e294721 for .NET Framework
 
   Checking Build System
   Building Custom Rule D:/home/desktop/GitHub/raining-jobs/CMakeLists.txt
-  rainingJobs.c
-D:\home\desktop\GitHub\raining-jobs\raining-jobs\src\rainingJobs.c(64,3): warning C4013: 'memcpy' non definita. Verr… considerata come esterna che restituisce un int. [D:\home\desktop\GitHub\raining-jobs\windows\raining-jobs.vcxproj]
-D:\home\desktop\GitHub\raining-jobs\raining-jobs\src\rainingJobs.c(305,2): warning C4013: 'memset' non definita. Verr… considerata come esterna che restituisce un int. [D:\home\desktop\GitHub\raining-jobs\windows\raining-jobs.vcxproj]
   raining-jobs.vcxproj -> D:\home\desktop\GitHub\raining-jobs\bin\Debug\raining-jobs.lib
   Building Custom Rule D:/home/desktop/GitHub/raining-jobs/CMakeLists.txt
-  raining-example.c
   raining-example.vcxproj -> D:\home\desktop\GitHub\raining-jobs\bin\Debug\raining-example.exe
   Building Custom Rule D:/home/desktop/GitHub/raining-jobs/CMakeLists.txt
 
@@ -92,7 +105,7 @@ D:\home\desktop\GitHub\raining-jobs\raining-jobs\src\rainingJobs.c(305,2): warni
 
 ---
     
-build ran for `10.42 s` and terminated with exit code `0`
+build ran for `28.97 s` and terminated with exit code `0`
 
 ---
 

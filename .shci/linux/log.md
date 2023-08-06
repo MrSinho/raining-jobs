@@ -15,7 +15,7 @@ max frequency : 0.0 MHz
 cores         : 4
 ```
 
-build ran for `8.07 s` and terminated with exit code `0`
+build ran for `5.60 s` and terminated with exit code `0`
 
 ---
 
@@ -63,29 +63,17 @@ BUILD > .shci/linux/build-output.txt
 ```
 
 ```bash
--- The C compiler identification is GNU 10.2.1
--- Detecting C compiler ABI info
--- Detecting C compiler ABI info - done
--- Check for working C compiler: /usr/bin/cc - skipped
--- Detecting C compile features
--- Detecting C compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /mnt/d/home/desktop/Github/raining-jobs/linux
-Scanning dependencies of target raining-jobs
-[ 25%] Building C object CMakeFiles/raining-jobs.dir/raining-jobs/src/rainingJobs.c.o
-[ 50%] Linking C static library ../bin/libraining-jobs.a
+-- Build files have been written to: /mnt/d/home/desktop/GitHub/raining-jobs/linux
 [ 50%] Built target raining-jobs
-Scanning dependencies of target raining-example
-[ 75%] Building C object CMakeFiles/raining-example.dir/examples/src/raining-example.c.o
-[100%] Linking C executable ../bin/raining-example
 [100%] Built target raining-example
 
 ```
 
 ---
     
-build ran for `8.07 s` and terminated with exit code `0`
+build ran for `5.60 s` and terminated with exit code `0`
 
 ---
 
