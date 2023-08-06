@@ -46,6 +46,9 @@ processor     : AMD64 Family 23 Model 17 Stepping 0, AuthenticAMD
 max frequency : 3500.0 MHz
 ```
 
+Note:
+> The algorithm has a notation of `O(n)`
+
 With 10 thousand values to sort:
 
 |Bit resolution/type | source length        | mean elapsed time (5 tests) |
