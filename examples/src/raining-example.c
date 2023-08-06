@@ -73,6 +73,9 @@ int main(void) {
 	float elapsed_time_s = (float)(end_ticks - start_ticks) / (float)CLOCKS_PER_SEC;
 	printf("Time consumed to sort %i values: %.3f milliseconds\n", SRC_LENGTH, elapsed_time_s * 1000.0);
 
+	free(src);
+	free(dst);
+
 	return 0;
 }
 
