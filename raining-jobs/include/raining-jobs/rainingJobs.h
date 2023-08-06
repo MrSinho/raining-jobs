@@ -25,19 +25,26 @@ extern "C" {
 
 
 
-typedef enum RainStorageType {
-	RAIN_INT_STORAGE_TYPE_MAGNITUDE_COMPLEMENT = 1 << 0,
-	RAIN_INT_STORAGE_TYPE_ONE_COMPLEMENT       = 1 << 1,
-	RAIN_INT_STORAGE_TYPE_TWO_COMPLEMENT       = 1 << 2,
-	RAIN_FLOAT_STORAGE_TYPE_IEEE_754           = 1 << 15
-} RainStorageType;
+typedef enum RainMemoryFormat {
+	RAIN_INT_MEMORY_FORMAT_MAGNITUDE_COMPLEMENT = 1 << 0,//supported
+	RAIN_INT_MEMORY_FORMAT_ONE_COMPLEMENT       = 1 << 1,//supported, different segregation
+	RAIN_INT_MEMORY_FORMAT_TWO_COMPLEMENT       = 1 << 2,//supported, different segregation
+	RAIN_INT_UNSUPPORTED_MEMORY_FORMAT          = 1 << 3,
+	RAIN_FLOAT_MEMORY_FORMAT_IEEE_754           = 1 << 15,//supported
+	RAIN_FLOAT_UNSUPPORTED_MEMORY_FORMAT        = 1 << 16
+} RainMemoryFormat;
 
+typedef enum RainMemoryType {
+	RAIN_MEMORY_TYPE_INT   = 0,//integer of any size (up to 64 bits)
+	RAIN_MEMORY_TYPE_FLOAT = 1 //float of single and double precision
+} RainMemoryType;
 
 typedef struct RainHost {
-	uint32_t        item_size_bytes;
-	uint32_t        src_length;
-	uint8_t         is_type_signed;
-	RainStorageType storage_type;
+	uint32_t         item_size_bytes;
+	uint32_t         src_length;
+	uint8_t          is_type_signed;
+	RainMemoryFormat supported_memory_formats;
+	RainMemoryType   queried_memory_type;
 } RainHost;
 
 
@@ -57,15 +64,16 @@ typedef struct RainingWorkGroupInfo {
 
 
 
-extern uint8_t rainingHostInit(
-	uint32_t  item_size_bytes,
-	uint32_t  src_length,
-	uint8_t   is_type_signed,
+extern uint8_t rainingGetSupportedMemoryFormats(
 	RainHost* p_host
 );
 
-extern uint8_t rainingGetStorageType(
-	RainHost* p_host
+extern uint8_t rainingHostInit(
+	uint32_t       item_size_bytes,
+	uint32_t       src_length,
+	uint8_t        is_type_signed,
+	RainMemoryType queried_memory_type,
+	RainHost*      p_host
 );
 
 extern uint64_t rainingWorkGroup(
@@ -84,23 +92,29 @@ extern uint32_t rainingUnit(
 	uint32_t bit_idx
 );
 
+
+
+typedef enum RainSegregateInstruction {
+	RAIN_SEGREGATE_INSTRUCTION_COPY_NEGATIVE         = 0,
+	RAIN_SEGREGATE_INSTRUCTION_INVERSE_COPY_NEGATIVE = 1,
+	RAIN_SEGREGATE_INSTRUCTION_MAX_ENUM
+} RainSegregateInstruction;
+
+
+
 extern uint8_t rainingSegregate(
-	uint32_t sign_bit,
-	uint32_t item_size,
-	void*    p_src,
-	uint32_t dst_size,
-	void*    p_dst
+	uint32_t                 sign_bit,
+	uint32_t                 item_size,
+	void*                    p_src,
+	uint32_t                 dst_size,
+	void*                    p_dst,
+	RainSegregateInstruction instruction
 );
 
 extern uint8_t rainingHostSubmit(
 	RainHost* p_host,
 	void*     p_src,
 	void*     p_dst
-);
-
-extern uint8_t rainingHostWaitForAll(
-	RainHost* p_host,
-	uint64_t  timeout_ms
 );
 
 extern uint8_t rainingHostRelease(

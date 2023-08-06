@@ -6,55 +6,81 @@ extern "C" {
 
 #include <stdlib.h>
 #include <memory.h>
+#include <inttypes.h>
 
+
+
+uint8_t rainingGetSupportedMemoryFormats(
+	RainHost* p_host
+) {
+	rainingError(p_host == NULL, "rainingGetSupportedMemoryFormats: invalid raining host memory", return 0);
+
+	int8_t i_negative_one_magnitude_complement = (int8_t)0x81; // = 0b10000001 last bit is sign bit
+	int8_t i_negative_one_one_complement       = (int8_t)0xFE; // = 0b11111110 = invert all bits from positive
+	int8_t i_negative_one_two_complement       = (int8_t)0xFF; // = 0b11111111 = one complement + 1 unit
+
+	if (i_negative_one_magnitude_complement == (int8_t)(-1)) {
+		p_host->supported_memory_formats |= RAIN_INT_MEMORY_FORMAT_MAGNITUDE_COMPLEMENT;
+	}
+	else if (i_negative_one_one_complement == (int8_t)(-1)) {
+		p_host->supported_memory_formats |= RAIN_INT_MEMORY_FORMAT_ONE_COMPLEMENT;
+	}
+	else if (i_negative_one_two_complement == (int8_t)(-1)) {
+		p_host->supported_memory_formats |= RAIN_INT_MEMORY_FORMAT_TWO_COMPLEMENT;
+	}
+	else {
+		p_host->supported_memory_formats |= RAIN_INT_UNSUPPORTED_MEMORY_FORMAT;
+	}
+
+	uint32_t bin_negative_one_IEE_754 = 0xBF800000; // = 0b10111111100000000000000000000000;
+	float* p_f_negative_one_IEE_754   = (float*)&bin_negative_one_IEE_754;
+	float      f_negative_one_IEE_754 = (*p_f_negative_one_IEE_754);
+
+	if (f_negative_one_IEE_754 == -1.0f) {
+		p_host->supported_memory_formats |= RAIN_FLOAT_MEMORY_FORMAT_IEEE_754;
+	}
+	else {
+		p_host->supported_memory_formats |= RAIN_FLOAT_UNSUPPORTED_MEMORY_FORMAT;
+	}
+
+	return 1;
+}
 
 uint8_t rainingHostInit(
-	uint32_t  item_size_bytes,
-	uint32_t  src_length,
-	uint8_t   is_type_signed,
+	uint32_t       item_size_bytes,
+	uint32_t       src_length,
+	uint8_t        is_type_signed,
+	RainMemoryType queried_memory_type,
 	RainHost* p_host
 ) {
 	rainingError(p_host == NULL, "rainingHostInit: invalid raining host memory", return 0);
 
-	RainHost host = {
-	    item_size_bytes,
-		src_length,
-		is_type_signed
-	};
-
-	(*p_host) = host;
+	p_host->item_size_bytes = item_size_bytes;
+	p_host->src_length = src_length;
+	p_host->is_type_signed = is_type_signed;
+	p_host->queried_memory_type = queried_memory_type;
 
 	//max number of iterations = src_length * bit_resolution
 	//total memory usage       = item_size_bytes * src_length * 3
-	
-	return 1;
-}
 
-uint8_t rainingGetStorageType(
-	RainHost* p_host
-) {
-	rainingError(p_host == NULL, "rainingGetStorageType: invalid raining host memory", return 0);
+	if (p_host->queried_memory_type == RAIN_MEMORY_TYPE_INT) {
 
-	int8_t i_negative_one_magnitude_complement = (int8_t)0b10000001;//last bit is sign bit
-	int8_t i_negative_one_one_complement       = (int8_t)0b11111110;// = invert all bits from positive
-	int8_t i_negative_one_two_complement       = (int8_t)0b11111111;// = one complement + 1 unit
+		RainMemoryFormat result = p_host->supported_memory_formats & RAIN_INT_UNSUPPORTED_MEMORY_FORMAT;
 
-	if (i_negative_one_magnitude_complement == (int8_t)(-1)) {
-		p_host->storage_type |= RAIN_INT_STORAGE_TYPE_MAGNITUDE_COMPLEMENT;
+		rainingError(
+			result == RAIN_INT_UNSUPPORTED_MEMORY_FORMAT,
+			"rainingHostInit: unsupported int memory format, may lead to unexpected output",
+			return 0
+		);
 	}
-	else if (i_negative_one_one_complement == (int8_t)(-1)) {
-		p_host->storage_type |= RAIN_INT_STORAGE_TYPE_ONE_COMPLEMENT;
-	}
-	else if (i_negative_one_two_complement == (int8_t)(-1)) {
-		p_host->storage_type |= RAIN_INT_STORAGE_TYPE_TWO_COMPLEMENT;
-	}
+	else if (p_host->queried_memory_type == RAIN_MEMORY_TYPE_FLOAT) {
+		RainMemoryFormat result = p_host->supported_memory_formats & RAIN_FLOAT_UNSUPPORTED_MEMORY_FORMAT;
 
-	//                                      sign        exponent
-	float f_negative_one_IEE_754 = (float)((1 << 31) | 1 << 23);
-	f_negative_one_IEE_754 = 0b10111111100000000000000000000000;
-
-	if (f_negative_one_IEE_754 == -1.0f) {
-		p_host->storage_type |= RAIN_FLOAT_STORAGE_TYPE_IEEE_754;
+		rainingError(
+			result == RAIN_FLOAT_UNSUPPORTED_MEMORY_FORMAT,
+			"rainingHostInit: unsupported float memory format, may lead to unexpected output",
+			return 0
+		);
 	}
 
 	return 1;
@@ -207,19 +233,16 @@ uint32_t rainingUnit(
 
 	for (uint32_t local_item_offset = 0; local_item_offset < src_size; local_item_offset += item_size) {
 		
-		//debug
-		//uint8_t* p_debug = (uint8_t*)&((uint8_t*)p_src)[src_offset + local_item_offset];
-
 		//find memory address
 		uint8_t* _p_src_as_bytes = (uint8_t*)p_src;
 
-		int64_t* p_item = (int64_t*)(&_p_src_as_bytes[src_offset + local_item_offset]);
-		int64_t  item   = (int64_t)(*p_item);//not actual value, but value with potentially junk bits coming from next value, which are discarded
+		uint64_t* p_item = (uint64_t*)(&_p_src_as_bytes[src_offset + local_item_offset]);
+		uint64_t  item   = (uint64_t)(*p_item);//not actual value, but value with potentially junk bits coming from next value, which are discarded
 
 #ifdef _MSC_VER
-		if ((int64_t)(item & (1i64 << bit_idx)) == (int64_t)(1i64 << bit_idx)) {//64 bit shift, MSVC complains otherwise
+		if ((uint64_t)(item & (1i64 << bit_idx)) == (uint64_t)(1i64 << bit_idx)) {//64 bit shift, MSVC complains otherwise, no sense btw, I lost my most beautiful years for that
 #else
-		if ((int64_t)(item & (1 << bit_idx)) == (int64_t)(1 << bit_idx)) {//for some reason gcc messed up here without the equal expression
+		if ((uint64_t)(item & (1ULL << bit_idx)) == (uint64_t)(1ULL << bit_idx)) {//very important ULL for 64 bit results, no sense btw, I lost my most beautiful years for that
 #endif//_MSC_VER
 			
 			memcpy(
@@ -247,28 +270,35 @@ uint32_t rainingUnit(
 }
 
 uint8_t rainingSegregate(
-	uint32_t sign_bit,
-	uint32_t item_size,
-	void*    p_src,
-	uint32_t dst_size,
-	void*    p_dst
+	uint32_t                 sign_bit,
+	uint32_t                 item_size,
+	void*                    p_src,
+	uint32_t                 dst_size,
+	void*                    p_dst,
+	RainSegregateInstruction instruction
 ) {
 	uint32_t negative_count = 0;
 
+	uint8_t* p_dst_as_bytes = (uint8_t*)p_dst;
+	uint8_t* p_src_as_bytes = (uint8_t*)p_src;
+
 	for (uint32_t item_offset = 0; item_offset < dst_size; item_offset += item_size) {
-		
-		uint64_t* p_item = (uint64_t*)&((uint8_t*)p_dst)[item_offset];
+
+		uint8_t* p_dst_at_offset = &p_dst_as_bytes[item_offset];
+
+		uint64_t* p_item = (uint64_t*)p_dst_at_offset;
 		uint64_t    item = (*p_item);
 
-		//save negative numbers at unused p_src memory
+
+		//save negative numbers at unused p_src memory, the most negative numbers are at the beginning of src
 #ifdef _MSC_VER
 		if ((uint64_t)(item & (1i64 << sign_bit)) == (uint64_t)(1i64 << sign_bit)) {
 #else
-		if ((uint64_t)(item & (1 << sign_bit)) == (uint64_t)(1 << sign_bit)) {
+		if ((uint64_t)(item & (1ULL << sign_bit)) == (uint64_t)(1ULL << sign_bit)) {
 #endif//_MSC_VER
 
 			memcpy(
-				&((uint8_t*)p_src)[item_offset],
+				&p_src_as_bytes[item_offset],
 				p_item,
 				item_size
 			);
@@ -291,8 +321,8 @@ uint8_t rainingSegregate(
 
 		//shift positive numbers to the origin of dst
 		memcpy(
-			&((uint8_t*)p_dst)[shift_offset],
-			&((uint8_t*)p_dst)[item_offset],
+			&p_dst_as_bytes[shift_offset],
+			&p_dst_as_bytes[item_offset],
 			item_size
 		);
 		
@@ -300,21 +330,42 @@ uint8_t rainingSegregate(
 
 	}
 
-	uint32_t negative_src_offset = negative_count * item_size - item_size;
+	//the most negative numbers are at the beginning of the src, move them to the end of dst by reversing the source order
+	if (instruction == RAIN_SEGREGATE_INSTRUCTION_INVERSE_COPY_NEGATIVE) {
+		uint32_t negative_src_offset = negative_count * item_size - item_size;
 
-	for (; shift_offset < dst_size; shift_offset += item_size) {
+		for (; shift_offset < dst_size; shift_offset += item_size) {
 
-		//uint64_t* p_item = (uint64_t*)&((uint8_t*)p_dst)[shift_offset];
-		//uint64_t    item = (*p_item);
+			//uint64_t* p_item = (uint64_t*)&((uint8_t*)p_dst)[shift_offset];
+			//uint64_t    item = (*p_item);
 
-		//shift negative numbers to the end
-		memcpy(
-			&((uint8_t*)p_dst)[shift_offset],
-			&((uint8_t*)p_src)[negative_src_offset],
-			item_size
-		);
+			//shift negative numbers to the end
+			memcpy(
+				&p_dst_as_bytes[shift_offset],
+				&p_src_as_bytes[negative_src_offset],
+				item_size
+			);
 
-		negative_src_offset -= item_size;
+			negative_src_offset -= item_size;
+		}
+	}
+	else if (instruction == RAIN_SEGREGATE_INSTRUCTION_COPY_NEGATIVE) {
+		uint32_t negative_src_offset = 0;
+
+		for (; shift_offset < dst_size; shift_offset += item_size) {
+
+			//uint64_t* p_item = (uint64_t*)&((uint8_t*)p_dst)[shift_offset];
+			//uint64_t    item = (*p_item);
+
+			//copy negative numbers without inverting the order
+			memcpy(
+				&p_dst_as_bytes[shift_offset],
+				&p_src_as_bytes[negative_src_offset],
+				item_size
+			);
+
+			negative_src_offset += item_size;
+		}
 	}
 
 	return 1;
@@ -349,21 +400,27 @@ uint8_t rainingHostSubmit(
 		return 1;
 	}
 
+
+	RainSegregateInstruction instruction = RAIN_SEGREGATE_INSTRUCTION_MAX_ENUM;
+
+	if (p_host->queried_memory_type == RAIN_MEMORY_TYPE_FLOAT) {
+		instruction = RAIN_SEGREGATE_INSTRUCTION_INVERSE_COPY_NEGATIVE;
+	}
+	else if (p_host->queried_memory_type == RAIN_MEMORY_TYPE_INT) {
+		instruction = RAIN_SEGREGATE_INSTRUCTION_COPY_NEGATIVE;
+	}
+	else {
+		rainingError(1, "invalid queried memory type", return 0);
+	}
+
 	rainingSegregate(
 		p_host->item_size_bytes * 8 - 1,              //sign_bit
 		p_host->item_size_bytes,                      //item_size
 		p_src,                                        //p_src
 		p_host->src_length * p_host->item_size_bytes, //dst_size
-		p_dst                                         //p_dst
+		p_dst,                                        //p_dst
+		instruction                                   //instruction
 	);
-
-	return 1;
-}
-
-uint8_t rainingHostWaitForAll(
-	RainHost* p_host,
-	uint64_t  timeout_ms
-) {
 
 	return 1;
 }

@@ -8,7 +8,7 @@ extern "C" {
 #include <time.h>
 
 
-#define SRC_LENGTH  ((int)100)
+#define SRC_LENGTH  ((int)1E4)
 #define DEBUG_PRINT 1
 
 
@@ -21,7 +21,8 @@ int main(void) {
 	rainingError(dst == NULL, "main: invalid dst memory", return -1);
 
 	for (uint32_t i = 0; i < SRC_LENGTH; i++) {
-		src[i] = (float)rand() / (float)rand();// * (float)(i % 2 == 0 ? -1 : 1);
+		src[i] = (float)rand() / (float)rand() * (float)(i % 2 == 0 ? -1 : 1);
+		//src[i] = rand() % rand() * (i % 2 == 0 ? -1 : 1);
 	}
 
 #if DEBUG_PRINT == 1
@@ -33,15 +34,19 @@ int main(void) {
 
 	
 	RainHost host = { 0 };
-	
-	rainingHostInit(
-		sizeof(float),   //item_size_bytes 
-		SRC_LENGTH,      //src_length 
-		RAINING_TRUE,    //is_type_signed
-		&host            //p_host    
+	uint8_t  r    =   0;
+
+	r = rainingGetSupportedMemoryFormats(&host);
+
+	r = rainingHostInit(
+		sizeof(float),          //item_size_bytes 
+		SRC_LENGTH,             //src_length 
+		RAINING_TRUE,           //is_type_signed
+		RAIN_MEMORY_TYPE_FLOAT, //queried_memory_type
+		&host                   //p_host    
 	);
 
-	rainingGetStorageType(&host);
+	rainingError(r == 0, "failed initializing host", return 0);
 
 	clock_t start_ticks = clock();
 
@@ -65,7 +70,7 @@ int main(void) {
 	}
 #endif//DEBUG_PRINT
 
-	double elapsed_time_s = (double)(end_ticks - start_ticks) / (double)CLOCKS_PER_SEC;
+	float elapsed_time_s = (float)(end_ticks - start_ticks) / (float)CLOCKS_PER_SEC;
 	printf("Time consumed to sort %i values: %.3f milliseconds\n", SRC_LENGTH, elapsed_time_s * 1000.0);
 
 	return 0;
