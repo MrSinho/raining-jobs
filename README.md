@@ -9,10 +9,6 @@ _See the windows and linux build logs:_
 
 ---
 
-## Benchmarks and comparison with other known sorting algorithms
-
----
-
 ## Build and implementation
 
 ```bash
@@ -28,20 +24,48 @@ See the [`raining-example.c`](./examples/src/raining-example.c) for reference.
 
 ---
 
-## Known issues and dealing with negative numbers
+## Supported formats
 
-With positive floating point numbers and unsigned integers, no issues have been found, whereas negative numbers are stored differently on memory based on architecture, operating system, cpu, etc... 
+The raining-jobs library supports all of the following memory formats: 
 
-
-|Storage type          | Supported data types                                                                            | 
+|Memory format         | Supported memory/data types                                                                     | 
 |----------------------|-------------------------------------------------------------------------------------------------|
-|Magnitude complement  | `UINT8` `UINT16` `UINT32` `UINT64` (always) `float32` `double64` (on some system positive only) |
-|One complement (todo) | all integers, all signed floating point data types                                              |
-|Two complement (todo) | all integers, all signed floating point data types                                              |
+|Magnitude complement  | all signed and unsigned integer types, from 8 to 64 bits                                        |
+|One complement        | all signed and unsigned integer types, from 8 to 64 bits                                        |
+|Two complement        | all signed and unsigned integer types, from 8 to 64 bits                                        |
+|IEEE 754              | signed and unsigned floating point numbers with single (32 bits) and double precision (64 bits) |
 
+## Benchmarks
 
-2's complement
-1's complement
-Magnitude complement --> only feature implemented
+The following tests have been performed on the following system (release build):
+```
+system        : Windows
+version       : 10.0.22621
+platform      : Windows-10-10.0.22621-SP0
+processor     : AMD64 Family 23 Model 17 Stepping 0, AuthenticAMD
+max frequency : 3500.0 MHz
+```
+
+With 10 thousand values to sort:
+
+|Bit resolution/type | source length        | mean elapsed time (5 tests) |
+|--------------------|----------------------|-----------------------------|
+|`float` (32 bits)   | 1E4                  | `1.8 ms`                    |
+|`double` (64 bits)  | 1E4                  | `1.6 ms`                    |
+
+With 100 thousand values to sort:
+
+|Bit resolution/type | source length        | mean elapsed time |
+|--------------------|----------------------|-------------------|
+|`float` (32 bits)   | 1E5                  | `19.0 ms`         |
+|`double` (64 bits)  | 1E5                  | `20.6 ms`         |
+
+With a million values to sort:
+
+|Bit resolution/type | source length        | mean elapsed time |
+|--------------------|----------------------|-------------------|
+|`float` (32 bits)   | 1E6                  | `243.0 ms`        |
+|`double` (64 bits)  | 1E6                  | `250.0 ms`        |
+
 
 ---
