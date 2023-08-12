@@ -116,7 +116,7 @@ We will eventually find out `-113` has a higher binary value than `-128` because
 
 0   ┍-----> -128  --&--( 1 << 3 )--┐ = 0             move to DESTINATION, index = 0 % 5
     |                              |
-1   ├-----> -113  --&--( 1 << 3 )--┤ = ( 1 << 3 )    MOVE TO DESTINATION, index = 1 % 5
+1   ├-----> -113  --&--( 1 << 3 )--┤ = ( 1 << 3 )    move to DESTINATION, index = 1 % 5
     |                              |
 2   ├----->  ...  -----------------┤
     |                              |
@@ -157,6 +157,6 @@ DESTINATION MEMORY
     -113
 4 
     -128
+```
 
-
-The same process is valid with floating point numbers, (and numbers in general) of any type. The only extra process in the end is the separation of negative numbers from positive numbers.
+The same process is valid also with floating point numbers, (and numbers in general) of any type. The only extra process in the end is the separation of negative numbers from positive numbers.
