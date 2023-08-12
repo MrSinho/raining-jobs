@@ -35,6 +35,13 @@ The raining-jobs library supports all of the following memory formats and memory
 |Two complement        | all signed and unsigned integer types, from 8 to 64 bits                                        |
 |IEEE 754              | signed and unsigned floating point numbers with single (32 bits) and double precision (64 bits) |
 
+## Algorithm description and example
+
+ * [docs/int-example.md](./docs/int-example.md)
+
+---
+
+
 ## Benchmarks
 
 The following tests have been performed on the following system (release build):
